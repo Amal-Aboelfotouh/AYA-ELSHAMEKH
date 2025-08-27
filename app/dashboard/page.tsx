@@ -6,7 +6,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { TrendingDown, TrendingUp, Target, Share, Download, ArrowLeft } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import { TrendingDown, TrendingUp, Target, Share, Download, ArrowLeft, Mail, Copy, Check } from "lucide-react"
 import { NerviaLogo } from "@/components/ui/nervia-logo"
 import Link from "next/link"
 import {
@@ -28,6 +38,10 @@ import {
 
 export default function DashboardPage() {
   const [timeRange, setTimeRange] = useState("7d")
+  const [isShareDialogOpen, setIsShareDialogOpen] = useState(false)
+  const [shareMessage, setShareMessage] = useState("")
+  const [selectedContact, setSelectedContact] = useState("")
+  const [copied, setCopied] = useState(false)
 
   // Mock data for charts
   const painLevelData = [
@@ -65,6 +79,31 @@ export default function DashboardPage() {
     streakDays: 7,
   }
 
+  // Share functionality
+  const contacts = [
+    { id: "remon", name: "Remon Elbana", email: "remon.elbana@example.com" },
+    { id: "doctor", name: "Dr. Sarah Williams", email: "dr.williams@healthcenter.com" },
+    { id: "therapist", name: "Physical Therapist", email: "therapist@clinic.com" },
+  ]
+
+  const handleShare = () => {
+    if (selectedContact && shareMessage) {
+      // Here you would typically send the data to your backend
+      console.log(`Sharing progress with ${selectedContact}: ${shareMessage}`)
+      alert(`Progress shared with ${contacts.find(c => c.id === selectedContact)?.name}!`)
+      setIsShareDialogOpen(false)
+      setShareMessage("")
+      setSelectedContact("")
+    }
+  }
+
+  const copyShareLink = () => {
+    const shareLink = `${window.location.origin}/shared-progress/${Math.random().toString(36).substr(2, 9)}`
+    navigator.clipboard.writeText(shareLink)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -91,10 +130,58 @@ export default function DashboardPage() {
                 <SelectItem value="1y">Last year</SelectItem>
               </SelectContent>
             </Select>
-            <Button variant="outline" size="sm">
-              <Share className="w-4 h-4 mr-2" />
-              Share
-            </Button>
+            <Dialog open={isShareDialogOpen} onOpenChange={setIsShareDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <Share className="w-4 h-4 mr-2" />
+                  Share
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Share Progress Report</DialogTitle>
+                  <DialogDescription>
+                    Share your therapy progress with healthcare providers or contacts
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">Share with:</label>
+                    <Select value={selectedContact} onValueChange={setSelectedContact}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a contact" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {contacts.map((contact) => (
+                          <SelectItem key={contact.id} value={contact.id}>
+                            {contact.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">Message (optional):</label>
+                    <Textarea
+                      placeholder="Add a personal message..."
+                      value={shareMessage}
+                      onChange={(e) => setShareMessage(e.target.value)}
+                      rows={3}
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button onClick={copyShareLink} variant="outline" className="flex-1">
+                      {copied ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
+                      {copied ? "Copied!" : "Copy Link"}
+                    </Button>
+                    <Button onClick={handleShare} disabled={!selectedContact} className="flex-1">
+                      <Mail className="w-4 h-4 mr-2" />
+                      Share
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
             <Button variant="outline" size="sm">
               <Download className="w-4 h-4 mr-2" />
               Export
